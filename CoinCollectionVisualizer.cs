@@ -1,10 +1,11 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 using DG.Tweening;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
-using TMPro;
+
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
@@ -14,19 +15,23 @@ namespace Runtime.Services
     {
         private readonly Transform _moveItemsParent;
         private readonly CancellationTokenSource _tokenSource;
+        private readonly Transform _item;
+        private readonly List<Transform> _coinsPool = new();
         
         private int _totalCurrency;
         
+        //Default values set
         private float _coinsShowInterval = .1f;
         private float _coinStartScale = .6f;
         private float _coinsEndScale = .8f;
         private float _coinFlyDuration = .6f;
         private float _localMoveDuration = .3f;
         
-        public CoinCollectionVisualizer(Transform itemParent, int totalCurrency = 0)
+        public CoinCollectionVisualizer(Transform itemParent, Transform item, int totalCurrency = 0)
         {
             _moveItemsParent = itemParent;
             _totalCurrency = totalCurrency;
+            _item = item;
             
             _tokenSource = new CancellationTokenSource();
         }
@@ -41,8 +46,7 @@ namespace Runtime.Services
             _localMoveDuration = localMoveDuration;
         }
         
-        public async UniTask VisualizeCoinsCollectAsync(Transform item, 
-            Transform endPosition, Vector2 createPosition, int coins, TMP_Text textToUpdate = null)
+        public async UniTask VisualizeCoinsCollectAsync(Transform endPosition, Vector2 createPosition, int coins, TMP_Text textToUpdate = null)
         {
             if (coins <= 0)
             {
@@ -51,7 +55,8 @@ namespace Runtime.Services
 
             var tasks = new List<UniTask>();
 
-            float totalDelay = 1;
+            const float totalDelay = 1;
+            
             var toTwo = .15f;
 
             var k = totalDelay * coins / (coins * (coins + 1) / 2f);
@@ -64,7 +69,8 @@ namespace Runtime.Services
 
                     await UniTask.Delay(TimeSpan.FromSeconds(delay),
                         cancellationToken: _tokenSource.Token);
-                }else if (coins == 2)
+                }
+                else if (coins == 2)
                 {
                     //HACK
                     await UniTask.Delay(TimeSpan.FromSeconds(toTwo *= _coinsShowInterval),
@@ -73,7 +79,7 @@ namespace Runtime.Services
 
                 var sequence = DOTween.Sequence();
 
-                var coin = Object.Instantiate(item, _moveItemsParent);
+                var coin = GetCoin();
                 coin.localScale = Vector3.one * _coinStartScale;
                 
                 coin.position = createPosition;
@@ -110,10 +116,31 @@ namespace Runtime.Services
                     }
                     
                     coin.gameObject.SetActive(false);
+                    _coinsPool.Add(coin);
                 });
             }
 
             await UniTask.WhenAll(tasks);
+        }
+
+        private Transform GetCoin()
+        {
+            if (_coinsPool.Count > 0)
+            {
+                var coin = _coinsPool[0];
+                _coinsPool.Remove(coin);
+                return coin;
+            }
+            
+            return Object.Instantiate(_item, _moveItemsParent);
+        }
+
+        public void Dispose()
+        {
+            foreach (var coin in _coinsPool)
+            {
+                Object.Destroy(coin.gameObject);
+            }
         }
     }
 }
