@@ -1,5 +1,6 @@
 # coins-collect-visualizer
 
-![image](https://github.com/muso-alt/coins-collect-visualizer/assets/29544866/cf1ccb4b-e5b5-4294-865e-8e9a1528a0df)
+![ezgif-6-ec2d47858e](https://github.com/muso-alt/coins-collect-visualizer/assets/29544866/2732555f-b927-427a-b359-5d363e49a5e4)
+
 
 Coins collect effect in C#
