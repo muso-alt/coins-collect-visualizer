@@ -80,6 +80,8 @@ namespace Runtime.Services
                 var sequence = DOTween.Sequence();
 
                 var coin = GetCoin();
+
+                coin.gameObject.SetActive(true);
                 coin.localScale = Vector3.one * _coinStartScale;
                 
                 coin.position = createPosition;
